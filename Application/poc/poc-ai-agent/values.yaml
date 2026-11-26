@@ -41,7 +41,7 @@ app:
       name: poc-ai-agent-egress-https
       destinations:
       - poc.ai-agent.com
-    healthGqlRedis:
+    redis:
       enabled: true
       url: "demo.redis.cache.windows.net"
       ip: 10.10.10.10
