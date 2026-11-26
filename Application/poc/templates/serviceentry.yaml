@@ -1,0 +1,45 @@
+{{- if .Values.app.egressSvcEntry.HTTPS.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: {{ .Values.app.egressSvcEntry.HTTPS.name }}
+  labels:
+    {{- include "poc.labels" . | nindent 4 }}
+    {{- with .Values.app.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  hosts:
+    {{- toYaml .Values.app.egressSvcEntry.HTTPS.destinations | nindent 4 }}
+  location: MESH_EXTERNAL
+  resolution: DNS
+  ports:
+    - number: 443
+      name: https
+      protocol: HTTPS
+---
+{{- end }}
+{{- if .Values.app.egressSvcEntry.healthGqlRedis.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: {{ printf "%s-redis" (include "poc.fullname" .) | trunc 63 | trimSuffix "-" }}
+  labels:
+    {{- include "poc.labels" . | nindent 4 }}
+    {{- with .Values.app.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  hosts:
+    - {{ .Values.app.egressSvcEntry.healthGqlRedis.url | quote }}
+  location: MESH_EXTERNAL
+  resolution: STATIC
+  ports:
+    - number: {{ .Values.app.egressSvcEntry.healthGqlRedis.port }}
+      name: tcp-redis
+      protocol: TCP
+  endpoints:
+    - address: {{ .Values.app.egressSvcEntry.healthGqlRedis.ip | quote }}
+      ports:
+        tcp-redis: {{ .Values.app.egressSvcEntry.healthGqlRedis.port }}
+{{- end }}

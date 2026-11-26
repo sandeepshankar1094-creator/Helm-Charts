@@ -1,0 +1,69 @@
+app:
+  akvName: poc-ai-agent-kv
+  replicaCount: 1
+  configMapName: poc-ai-agent-config
+  autoscaleEnabled: true
+  autoscaleMin: 1
+  autoscaleMax: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1500Mi
+    requests:
+      cpu: 20m
+      memory: 425Mi
+  micrometer:
+    enable: true
+  containers:
+    image: poc-ai-agent
+    tag: 80
+    port: 8080
+    readinessEndpoint: /api/actuator/health #this needs to be updated
+    livenessEndpoint: /api/actuator/health #this needs to be updated
+    prometheusPath: /api/actuator/prometheus
+    envCode: dev
+    env:
+    - name: sub-key
+      value: "sub-key@azurekeyvault"
+
+  kvSecrets:
+  - sub-key
+
+  Cert: poc-ai-agent-cert
+
+  labels:
+    app: poc-ai-agent
+    project: poc
+
+  egressSvcEntry:
+    HTTPS:
+      enabled: true
+      name: poc-ai-agent-egress-https
+      destinations:
+      - poc.ai-agent.com
+    healthGqlRedis:
+      enabled: true
+      url: "demo.redis.cache.windows.net"
+      ip: 10.10.10.10
+      port: 6380
+
+
+ingress:
+  virtualServiceName: poc-ai-agent-vs
+  destinationRuleName: poc-ai-agent-dr
+  certName: poc-ai-agent-certs-qa2
+  enabled: true
+  http:
+  - match:
+    - uri:
+        prefix: /api/
+
+service:
+  type: ClusterIP
+  port: 8080
+  portName: http-poc-ai-agent
+  targetPort: 8080
+  annotations: {}
+  labels:
+    app: poc-ai-agent
+    project: poc

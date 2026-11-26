@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "poc.fullname" . }}
+  labels:
+    {{- include "poc.labels" . | nindent 4 }}
+    {{- with .Values.app.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if not .Values.app.autoscaleEnabled }}
+  replicas: {{ .Values.app.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "poc.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- if or .Values.podAnnotations .Values.app.micrometer.enable }}
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.app.micrometer.enable }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: {{ .Values.app.containers.prometheusPath | quote }}
+        prometheus.io/port: {{ .Values.app.containers.port | quote }}
+        {{- end }}
+      {{- end }}
+      labels:
+        {{- include "poc.selectorLabels" . | nindent 8 }}
+        {{- with .Values.app.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "poc.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ include "poc.name" . }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.app.containers.image }}:{{ .Values.app.containers.tag }}"
+          imagePullPolicy: {{ .Values.app.containers.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.containers.port }}
+              protocol: TCP
+          env:
+            - name: ENV_CODE
+              value: {{ .Values.app.containers.envCode | quote }}
+            {{- with .Values.app.containers.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.app.containers.livenessEndpoint | quote }}
+              port: http
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.app.containers.readinessEndpoint | quote }}
+              port: http
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}

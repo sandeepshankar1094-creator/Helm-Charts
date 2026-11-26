@@ -1,0 +1,29 @@
+{{- if .Values.ingress.enabled }}
+{{- $serviceName := include "poc.fullname" . }}
+{{- $namespace := .Release.Namespace }}
+{{- $servicePort := .Values.service.port }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Values.ingress.virtualServiceName }}
+  labels:
+    {{- include "poc.labels" . | nindent 4 }}
+    {{- with .Values.app.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  hosts:
+    {{- toYaml .Values.ingress.hosts | nindent 4 }}
+  gateways:
+    {{- toYaml .Values.ingress.gateways | nindent 4 }}
+  http:
+    {{- range .Values.ingress.http }}
+    - match:
+        {{- toYaml .match | nindent 8 }}
+      route:
+        - destination:
+            host: {{ $serviceName }}.{{ $namespace }}.svc.cluster.local
+            port:
+              number: {{ $servicePort }}
+    {{- end }}
+{{- end }}
