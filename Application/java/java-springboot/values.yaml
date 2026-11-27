@@ -1,6 +1,6 @@
 app:
   akvName: java-springboot-kv
-  replicaCount: 1
+  replicaCount: 2
   configMapName: java-springboot-config
   autoscaleEnabled: true
   autoscaleMin: 1
@@ -25,17 +25,8 @@ app:
     env:
     - name: sub-key
       value: sub-key@azurekeyvault
-    - name: api-key
-      value: api-key@azurekeyvault
-    - name: database-password
-      value: database-password@azurekeyvault
-    - name: redis-token
-      value: redis-token@azurekeyvault
   kvSecrets:
   - sub-key
-  - api-key
-  - database-password
-  - redis-token
   Cert: java-springboot-cert
   labels:
     app: java-springboot
