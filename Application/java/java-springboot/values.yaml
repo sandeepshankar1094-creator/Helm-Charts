@@ -1,6 +1,6 @@
 app:
   akvName: java-springboot-kv
-  replicaCount: 2
+  replicaCount: 3
   configMapName: java-springboot-config
   autoscaleEnabled: true
   autoscaleMin: 1
