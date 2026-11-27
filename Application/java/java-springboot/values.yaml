@@ -1,0 +1,62 @@
+app:
+  akvName: java-springboot-kv
+  replicaCount: 1
+  configMapName: java-springboot-config
+  autoscaleEnabled: true
+  autoscaleMin: 1
+  autoscaleMax: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1500Mi
+    requests:
+      cpu: 20m
+      memory: 425Mi
+  micrometer:
+    enable: true
+  containers:
+    image: java-springboot
+    tag: 80
+    port: 8080
+    readinessEndpoint: /api/actuator/health
+    livenessEndpoint: /api/actuator/health
+    prometheusPath: /api/actuator/prometheus
+    envCode: dev
+    env:
+    - name: sub-key
+      value: sub-key@azurekeyvault
+  kvSecrets:
+  - sub-key
+  Cert: java-springboot-cert
+  labels:
+    app: java-springboot
+    project: java
+  egressSvcEntry:
+    HTTPS:
+      enabled: true
+      name: java-springboot-egress-https
+      destinations:
+      - poc.ai-agent.com
+    redis:
+      enabled: true
+      url: demo.redis.cache.windows.net
+      ip: 10.10.10.10
+      port: 6380
+ingress:
+  virtualServiceName: java-springboot-vs
+  destinationRuleName: java-springboot-dr
+  certName: java-springboot-certs-qa2
+  enabled: true
+  http:
+  - match:
+    - uri:
+        prefix: /api/
+service:
+  type: ClusterIP
+  port: 8080
+  portName: http-java-springboot
+  targetPort: 8080
+  annotations: {}
+  labels:
+    app: java-springboot
+    project: java
