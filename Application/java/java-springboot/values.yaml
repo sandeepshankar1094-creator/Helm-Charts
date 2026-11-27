@@ -7,7 +7,7 @@ app:
   autoscaleMax: 1
   resources:
     limits:
-      cpu: 500m
+      cpu: 1000
       memory: 1500Mi
     requests:
       cpu: 20m
